@@ -98,10 +98,7 @@ unset($data["confirm_password"]);
                 } else {
                     $session_data = [
                         'id' => $user['id'],
-                        'first_name' => $user['first_name'],
-                        'last_name' => $user['last_name'],
                         'email' => $user['email'],
-                        'phone' => $user['phone'],
                         'session_id' => $session["data"]['session_id'],
                         'session_start_time' => $session["data"]["session_start_time"],
                         'session_token' => $session["data"]["session_token"]

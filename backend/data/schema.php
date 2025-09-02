@@ -74,7 +74,9 @@ class Schema {
             cars_id INT(11) NOT NULL,
             content TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (cars_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (cars_id) REFERENCES car(id) ON DELETE CASCADE,
+            FOREIGN KEY (Testimonials_id) REFERENCES users(id) ON DELETE CASCADE
+
         )";
         return $this->conn->query($sql);    
     }
@@ -90,7 +92,9 @@ class Schema {
             post_id INT(11) NOT NULL,
             cars_id INT(11) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (cars_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (cars_id) REFERENCES car(id) ON DELETE CASCADE,
+            FOREIGN KEY (post_id) REFERENCES testimonials(id) ON DELETE CASCADE
+
         )";
         return $this->conn->query($sql);
     }
@@ -102,7 +106,7 @@ class Schema {
     public function createSessionsTable() {
         $sql = "CREATE TABLE IF NOT EXISTS sessions (
             id INT(11) AUTO_INCREMENT PRIMARY KEY,
-            cars_id INT(11) NOT NULL,
+            cars_id INT(11) NULL,
             session_id VARCHAR(255) NOT NULL,
             session_start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             session_end_time TIMESTAMP NULL DEFAULT NULL,
