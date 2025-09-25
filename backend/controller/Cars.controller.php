@@ -78,7 +78,7 @@ class CarsController {
         if ($created) {
             return $this->utility->jsonResponse(200, "Rental recorded.", $data);
         }
-        return $this->utility->jsonResponse(500, "Failed to record rental.", []);
+        return $this->utility->jsonResponse(300, "Failed to record rental.", []);
     }
 
     public function options(): string|array
