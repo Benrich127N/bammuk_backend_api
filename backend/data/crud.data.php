@@ -51,6 +51,7 @@ class Crud extends DBConfig {
         $this->schemas->createSessionsTable();
         $this->schemas->createPurchasesTable();
         $this->schemas->createRentalsTable();
+        $this->schemas->migrateCarsIdColumns();
     }
 
     /**

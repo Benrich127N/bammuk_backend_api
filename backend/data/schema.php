@@ -160,7 +160,7 @@ class Schema {
             status ENUM('pending','completed','cancelled') DEFAULT 'completed',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (car_id) REFERENCES car(id) ON DELETE CASCADE
+            FOREIGN KEY (cars_id) REFERENCES car(id) ON DELETE CASCADE
         )";
         return $this->conn->query($sql);
     }
@@ -172,15 +172,57 @@ class Schema {
         $sql = "CREATE TABLE IF NOT EXISTS rentals (
             id INT(11) AUTO_INCREMENT PRIMARY KEY,
             user_id INT(11) NOT NULL,
-            car_id INT(11) NOT NULL,
+            cars_id INT(11) NOT NULL,
             start_date DATE NOT NULL,
             end_date DATE NOT NULL,
             daily_rate INT(11) NULL,
             status ENUM('pending','active','completed','cancelled') DEFAULT 'active',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (car_id) REFERENCES car(id) ON DELETE CASCADE
+            FOREIGN KEY (cars_id) REFERENCES car(id) ON DELETE CASCADE
         )";
         return $this->conn->query($sql);
+    }
+
+    /**
+     * Migrate existing tables to use cars_id instead of car_id when present
+     */
+    public function migrateCarsIdColumns() {
+        $this->renameColumnIfExists('purchases', 'car_id', 'cars_id');
+        $this->renameColumnIfExists('rentals', 'car_id', 'cars_id');
+    }
+
+    private function renameColumnIfExists($table, $old, $new) {
+        try {
+            $stmt = $this->conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+            $stmt->execute([$table, $old]);
+            $oldExists = (int)$stmt->fetchColumn() > 0;
+            $stmt = $this->conn->prepare("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+            $stmt->execute([$table, $new]);
+            $newExists = (int)$stmt->fetchColumn() > 0;
+            if ($oldExists && !$newExists) {
+                // Drop FKs on the old column if any
+                $sql = "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? AND REFERENCED_TABLE_NAME IS NOT NULL";
+                $stmt = $this->conn->prepare($sql);
+                $stmt->execute([$table, $old]);
+                $constraints = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($constraints as $constraint) {
+                    try { $this->conn->query("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$constraint}`"); } catch (Exception $e) {}
+                }
+                // Rename column keeping type
+                $colTypeStmt = $this->conn->prepare("SELECT COLUMN_TYPE, IS_NULLABLE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+                $colTypeStmt->execute([$table, $old]);
+                $col = $colTypeStmt->fetch(PDO::FETCH_ASSOC);
+                $type = $col ? $col['COLUMN_TYPE'] : 'INT(11)';
+                $nullable = (isset($col['IS_NULLABLE']) && $col['IS_NULLABLE'] === 'YES') ? 'NULL' : 'NOT NULL';
+                $this->conn->query("ALTER TABLE `{$table}` CHANGE `{$old}` `{$new}` {$type} {$nullable}");
+                // Re-add FK to car(id) when appropriate
+                if ($table === 'purchases' || $table === 'rentals') {
+                    try { $this->conn->query("ALTER TABLE `{$table}` ADD CONSTRAINT `fk_{$table}_cars_id` FOREIGN KEY (`{$new}`) REFERENCES `car`(`id`) ON DELETE CASCADE"); } catch (Exception $e) {}
+                }
+            }
+        } catch (Exception $e) {
+            // silent to avoid breaking runtime
+        }
     }
 }

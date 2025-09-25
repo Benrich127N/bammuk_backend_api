@@ -140,18 +140,30 @@ class Models
     // Transactions
     public function createPurchase($data)
     {
+        // Ensure referenced user and car exist to satisfy FK
+        $userExists = self::$crud->findById("users", (int)$data["user_id"], ['id']) !== false;
+        $carExists = self::$crud->findById("car", (int)$data["cars_id"], ['id']) !== false;
+        if (!$userExists || !$carExists) {
+            return false;
+        }
         return self::$crud->create("purchases", [
             "user_id" => $data["user_id"],
-            "car_id" => $data["car_id"],
+            "cars_id" => $data["cars_id"],
             "price" => $data["price"]
         ]);
     }
 
     public function createRental($data)
     {
+        // Ensure referenced user and car exist to satisfy FK
+        $userExists = self::$crud->findById("users", (int)$data["user_id"], ['id']) !== false;
+        $carExists = self::$crud->findById("car", (int)$data["cars_id"], ['id']) !== false;
+        if (!$userExists || !$carExists) {
+            return false;
+        }
         return self::$crud->create("rentals", [
             "user_id" => $data["user_id"],
-            "car_id" => $data["car_id"],
+            "cars_id" => $data["cars_id"],
             "start_date" => $data["start_date"],
             "end_date" => $data["end_date"],
             "daily_rate" => $data["daily_rate"] ?? null

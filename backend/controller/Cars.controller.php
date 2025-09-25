@@ -67,7 +67,7 @@ class CarsController {
 
     public function rent(): string|array
     {
-        $required = ["user_id", "car_id", "start_date", "end_date"];
+        $required = ["user_id", "cars_id", "start_date", "end_date"];
         $validate = $this->utility->validateFields(self::$data, $required);
         if ($validate["error"]) {
             return ['statuscode' => 401, 'status' => $validate['error_msg'], 'data' => []];

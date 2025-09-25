@@ -127,6 +127,8 @@ unset($data["confirm_password"]);
     public function startSession($session): string|array
     {
         session_start();
+        // Ensure a fresh unique session id to avoid UNIQUE constraint collisions
+        session_regenerate_id(true);
         $session["session_id"] = session_id(); // Store session ID
         $session["user_agent"] = $_SERVER["HTTP_USER_AGENT"];
         $session["ip_address"] = $_SERVER["REMOTE_ADDR"];
@@ -135,6 +137,13 @@ unset($data["confirm_password"]);
         $session["session_start_time"] = date("Y-m-d H:i:s", time());
 
         $result = $this->model->startSession($session);
+        if (!$result) {
+            // Retry once with a new regenerated session id and token
+            session_regenerate_id(true);
+            $session["session_id"] = session_id();
+            $session["session_token"] = bin2hex(random_bytes(32));
+            $result = $this->model->startSession($session);
+        }
         if (!$result) {
             return ['status' => false];
         } else {
