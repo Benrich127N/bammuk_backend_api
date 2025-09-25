@@ -100,4 +100,34 @@ class Models
             ];
         }
     }
+
+    // Cars
+    public function createCar($data)
+    {
+        return self::$crud->create("car", [
+            "cars_id" => $data["cars_id"],
+            "cars_name" => $data["cars_name"],
+            "price" => $data["price"]
+        ]);
+    }
+
+    public function listCars($fields = ['*'])
+    {
+        return self::$crud->findAll("car", $fields);
+    }
+
+    // Testimonials
+    public function createTestimonial($data)
+    {
+        return self::$crud->create("testimonials", [
+            "Testimonials_id" => $data["Testimonials_id"],
+            "cars_id" => $data["cars_id"],
+            "content" => $data["content"]
+        ]);
+    }
+
+    public function listTestimonials($fields = ['*'])
+    {
+        return self::$crud->findAll("testimonials", $fields);
+    }
 }
