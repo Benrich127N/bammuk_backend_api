@@ -13,6 +13,15 @@ function carsRoutes($endpoint, $data, $path)
         case 'view':
             $response = getCarsInstance('view', 'CarsController', $data);
             break;
+        case 'buy':
+            $response = getCarsInstance('buy', 'CarsController', $data);
+            break;
+        case 'rent':
+            $response = getCarsInstance('rent', 'CarsController', $data);
+            break;
+        case 'options':
+            $response = getCarsInstance('options', 'CarsController', $data);
+            break;
         default:
             $response = "404 Not Found";
         break;

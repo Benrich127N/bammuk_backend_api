@@ -45,9 +45,12 @@ class Crud extends DBConfig {
         // You can call schema creation methods here
         $this->schemas->createUsersTable();
         $this->schemas->createCarsTable();
+        $this->schemas->addCarDetailColumns();
         $this->schemas->createTestimonialsTable();
         $this->schemas->createLikesTable();
         $this->schemas->createSessionsTable();
+        $this->schemas->createPurchasesTable();
+        $this->schemas->createRentalsTable();
     }
 
     /**

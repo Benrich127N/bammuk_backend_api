@@ -11,7 +11,12 @@ $queryString = $_SERVER["QUERY_STRING"] ?? '';
 $uri = $_SERVER["REQUEST_URI"];
 $response = handleRequest($uri, $method);
 
-echo json_encode($response);
+// If handlers already return JSON-encoded strings, avoid double-encoding
+if (is_array($response)) {
+    echo json_encode($response);
+} else {
+    echo $response;
+}
 
 function handleRequest($url, $method) {
     $url = trim($url, '/');

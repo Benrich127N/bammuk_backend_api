@@ -37,7 +37,7 @@ class Models
      * @return array Returns an array with status code and user data if login is successful, or an error message if not.
      * @throws Exception If the user is not found or the password is incorrect.
      */
-    public function logInUser($data) {
+    public function loginUser($data) {
         $result = self::$crud->findByEmail("users", $data["email"]);
         if (is_array($result) && isset($result['email'])){
             $hashedPassword = $result['password'];
@@ -84,7 +84,7 @@ class Models
     {
         $result = self::$crud->findOne("sessions", ['session_id' => $sessionId], ['*']);
         if (is_array($result)) {
-            $get_user = self::$crud->findOne("users", ['id' => $result["id"]]);
+            $get_user = self::$crud->findOne("users", ['id' => $result["cars_id"]]);
             $user = (is_array($get_user)) ? $get_user : [];
             return [
                 'statuscode' => 200,
@@ -107,7 +107,13 @@ class Models
         return self::$crud->create("car", [
             "cars_id" => $data["cars_id"],
             "cars_name" => $data["cars_name"],
-            "price" => $data["price"]
+            "price" => $data["price"],
+            "brand" => $data["brand"] ?? null,
+            "model" => $data["model"] ?? null,
+            "body_style" => $data["body_style"] ?? null,
+            "car_condition" => $data["car_condition"] ?? null,
+            "fuel_type" => $data["fuel_type"] ?? null,
+            "year" => $data["year"] ?? null
         ]);
     }
 
@@ -129,5 +135,26 @@ class Models
     public function listTestimonials($fields = ['*'])
     {
         return self::$crud->findAll("testimonials", $fields);
+    }
+
+    // Transactions
+    public function createPurchase($data)
+    {
+        return self::$crud->create("purchases", [
+            "user_id" => $data["user_id"],
+            "car_id" => $data["car_id"],
+            "price" => $data["price"]
+        ]);
+    }
+
+    public function createRental($data)
+    {
+        return self::$crud->create("rentals", [
+            "user_id" => $data["user_id"],
+            "car_id" => $data["car_id"],
+            "start_date" => $data["start_date"],
+            "end_date" => $data["end_date"],
+            "daily_rate" => $data["daily_rate"] ?? null
+        ]);
     }
 }

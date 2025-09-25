@@ -63,6 +63,33 @@ class Schema {
     }
 
     /**
+     * Add optional detail columns to car table (idempotent on MySQL 8+)
+     * @return void
+     */
+    public function addCarDetailColumns() {
+        $columns = [
+            'brand' => 'VARCHAR(100) NULL',
+            'model' => 'VARCHAR(100) NULL',
+            'body_style' => 'VARCHAR(100) NULL',
+            'car_condition' => 'VARCHAR(50) NULL',
+            'fuel_type' => 'VARCHAR(50) NULL',
+            'year' => 'INT(4) NULL'
+        ];
+        foreach ($columns as $name => $definition) {
+            try {
+                $stmt = $this->conn->prepare("SELECT COUNT(*) AS cnt FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'car' AND column_name = ?");
+                $stmt->execute([$name]);
+                $exists = (int)$stmt->fetchColumn() > 0;
+                if (!$exists) {
+                    $this->conn->query("ALTER TABLE car ADD COLUMN `{$name}` {$definition}");
+                }
+            } catch (Exception $e) {
+                // ignore to avoid breaking app on shared hosting/MySQL variants
+            }
+        }
+    }
+
+    /**
      * Create the comments table
      * 
      * @return bool True on success, false on failure
@@ -117,6 +144,42 @@ class Schema {
             ip_address VARCHAR(45) NOT NULL,
             user_agent TEXT NOT NULL,
             FOREIGN KEY (cars_id) REFERENCES users(id) ON DELETE CASCADE
+        )";
+        return $this->conn->query($sql);
+    }
+
+    /**
+     * Purchases table for buying cars
+     */
+    public function createPurchasesTable() {
+        $sql = "CREATE TABLE IF NOT EXISTS purchases (
+            id INT(11) AUTO_INCREMENT PRIMARY KEY,
+            user_id INT(11) NOT NULL,
+            cars_id INT(11) NOT NULL,
+            price INT(11) NOT NULL,
+            status ENUM('pending','completed','cancelled') DEFAULT 'completed',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (car_id) REFERENCES car(id) ON DELETE CASCADE
+        )";
+        return $this->conn->query($sql);
+    }
+
+    /**
+     * Rentals table for renting cars
+     */
+    public function createRentalsTable() {
+        $sql = "CREATE TABLE IF NOT EXISTS rentals (
+            id INT(11) AUTO_INCREMENT PRIMARY KEY,
+            user_id INT(11) NOT NULL,
+            car_id INT(11) NOT NULL,
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL,
+            daily_rate INT(11) NULL,
+            status ENUM('pending','active','completed','cancelled') DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (car_id) REFERENCES car(id) ON DELETE CASCADE
         )";
         return $this->conn->query($sql);
     }
